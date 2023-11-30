@@ -2,5 +2,5 @@
 namespace Zarkiel\Triniel\Attributes;
 
 class CallbackAfter{}
-class CallbackBefore{};
+class CallbackBefore{}
 class Route{}
