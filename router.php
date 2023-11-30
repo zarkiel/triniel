@@ -1,6 +1,8 @@
 <?php
 namespace Zarkiel\Triniel;
 
+use Exception;
+use PDOException;
 use Zarkiel\Triniel\Exceptions\NotFoundException;
 use Zarkiel\Triniel\Exceptions\MethodNotAllowedException;
 use Zarkiel\Triniel\Attributes\Route;
@@ -83,9 +85,13 @@ class Router{
                         $this->controller->startExecution();
                         call_user_func_array([$this->controller, $route['action']], $matches);
                         $this->runCallbacks(CallbackAfter::class, $route, $matches);
-                    }catch(\Exception $e){
-                        throw new \Exception($e->getMessage(), 500);
+                    }catch(\PDOException $e){
+                        throw new Exception($e->getMessage(), 500);
                     }
+                    catch(\Exception $e){
+                        throw $e;
+                    }
+
                     break;
                 }
             }

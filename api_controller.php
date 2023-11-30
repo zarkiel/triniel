@@ -3,6 +3,7 @@ namespace Zarkiel\Triniel;
 
 use Zarkiel\Triniel\Attributes\Route;
 use Zarkiel\Triniel\Exceptions\InvalidTokenException;
+use Zarkiel\Triniel\Exceptions\UnauthorizedException;
 
 /**
  * @author 		Zarkiel
@@ -106,6 +107,20 @@ class ApiController {
         $sections_ = explode('.', $token);
         $payload = base64_decode($sections_[1]);
         return json_decode($payload);
+    }
+
+    function canPerform(string $moduleId, int $operation){
+        $conn = &$this->getConnection('Core');
+        $payload = $this->getTokenPayload();
+        
+        $canPerform = $conn->query("SELECT `hasPermission`('{$payload->iss}', '{$moduleId}', '{$operation}') AS permission")->fetch(\PDO::FETCH_ASSOC);
+        if (@intval($canPerform['permission']) === 0) {
+            throw new UnauthorizedException();
+        }
+    }
+
+    function getRequestBody(){
+        return json_decode(file_get_contents('php://input'), true);
     }
 
     /**
