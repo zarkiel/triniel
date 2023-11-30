@@ -8,7 +8,7 @@ use Zarkiel\Triniel\Attributes\CallbackAfter;
 use Zarkiel\Triniel\Attributes\CallbackBefore;
 
 /**
- * @author 		Zarkielx
+ * @author 		Zarkiel
  * @email		zarkiel@gmail.com
  */
 class Router{
@@ -88,8 +88,6 @@ class Router{
                     }
                     break;
                 }
-
-                
             }
         }
 
@@ -97,13 +95,6 @@ class Router{
             throw new NotFoundException();
         }
 
-        // NOT REALLY NEEDED
-        // CAUSES ERROR WHEN BROWSER SEND OPTIONS REQUEST
-        /*
-        if(!$routeMatch){
-            throw new MethodNotAllowedException();
-        }
-        */
     }
 
     function runCallbacks($type, $route, $matches){
