@@ -8,7 +8,7 @@ use Zarkiel\Triniel\Attributes\CallbackAfter;
 use Zarkiel\Triniel\Attributes\CallbackBefore;
 
 /**
- * @author 		Zarkiel
+ * @author 		Zarkielx
  * @email		zarkiel@gmail.com
  */
 class Router{
