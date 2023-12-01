@@ -2,9 +2,9 @@
 namespace Zarkiel\Triniel;
 
 use PDO;
+use Zarkiel\Triniel\SwaggerCreator;
 use Zarkiel\Triniel\Attributes\Route;
 use Zarkiel\Triniel\Exceptions\{BadRequestException, InvalidTokenException, UnauthorizedException, UnprocessableContentException};
-
 
 /**
  * @author 		Zarkiel
@@ -15,12 +15,26 @@ class ApiController {
     private $startExecutionTime = 0;
     private $endExecutionTime = 0;
     protected $connections = [];
+    private $basePath = "/";
+
+    function __construct($basePath){
+        $this->basePath = $basePath;
+    }
+
+    function getBasePath(){
+        return $this->basePath;
+    }
 
     #[Route(path: "/__version__/", method: "GET")]
     function apiVersion() {
         $this->renderRaw([
             'message' => 'Common API'
         ]);
+    }
+
+    #[Route(path: "/__doc__/", method: "GET")]
+    function __doc__(){
+        echo (new SwaggerCreator($this))->getJSON();
     }
 
     function startExecution() {
@@ -132,6 +146,7 @@ class ApiController {
 
         return $requestBody;
     }
+
 
     /**
      * Función para validar token

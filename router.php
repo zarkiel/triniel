@@ -18,9 +18,9 @@ class Router{
     protected string $basePath;
     protected bool $caseSensitive = true;
 
-    function __construct(ApiController $controller, string $basePath = "/"){
+    function __construct(ApiController $controller){
         $this->controller = $controller;
-        $this->basePath = $basePath;
+        $this->basePath = $controller->getBasePath();
     }
 
     /**
