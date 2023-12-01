@@ -15,7 +15,7 @@ class ApiController {
     private $startExecutionTime = 0;
     private $endExecutionTime = 0;
     protected $connections = [];
-    private $basePath = "/";
+    private $basePath = "";
 
     function __construct($basePath){
         $this->basePath = $basePath;

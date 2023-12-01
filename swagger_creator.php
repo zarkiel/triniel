@@ -5,6 +5,10 @@ use ReflectionClass, ReflectionMethod, ReflectionAttribute;
 use Zarkiel\Triniel\ApiController;
 use Zarkiel\Triniel\Attributes\Route;
 
+/**
+ * @author    Zarkiel
+ * @email     zarkiel@gmail.com
+ */
 class SwaggerCreator{
     private $controller;
 
@@ -51,7 +55,7 @@ class SwaggerCreator{
                 preg_match_all('/\((.+)\)/', $arguments['path'], $matches);
                 $path = str_replace($matches[0], array_map(fn($parameter) => '$'.$parameter->name, $parameters), $arguments['path']);
                 //$path = $arguments['path'];
-                $paths[$path][strtolower($arguments['method'])] = [
+                $paths[$this->controller->getBasePath().$path][strtolower($arguments['method'])] = [
                     "summary" => $tags['summary'] ?? '',
                     //"paremeters" => $parameters,
                     //'matches' => $matches,

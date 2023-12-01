@@ -64,6 +64,9 @@ class Router{
      * @param    array      $matches    Url parameters matched
      */
     private function runCallbacks($type, $route, $matches){
+        if(str_starts_with($route['action'], '__'))
+            return;
+
         $callbacks = $this->getCallbacks($type);
         foreach($callbacks As $callback){
             if(empty($callback["actions"]))
@@ -72,6 +75,12 @@ class Router{
             if(!empty($callback['onlyFor'])){
                 $callbackActionsFor = explode(',', preg_replace("/ +/", "", $callback["onlyFor"]));
                 if(!in_array($route['action'], $callbackActionsFor))
+                    continue;
+            }
+
+            if(!empty($callback['exclude'])){
+                $excludeActions = explode(',', preg_replace("/ +/", "", $callback["exclude"]));
+                if(in_array($route['action'], $excludeActions))
                     continue;
             }
             
