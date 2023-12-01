@@ -1,6 +1,7 @@
 <?php
 namespace Zarkiel\Triniel\Exceptions;
 use Exception;
+use Error;
 
 class HttpException extends Exception {
 }
@@ -29,15 +30,40 @@ class InvalidTokenException extends HttpException {
     }
 }
 
+class UnprocessableContentException extends HttpException {
+    function __construct($message = 'Invalid Request', $code = 422) {
+        parent::__construct($message, $code);
+    }
+}
+
+class BadRequestException extends HttpException {
+    function __construct($message = 'Bad Request', $code = 400) {
+        parent::__construct($message, $code);
+    }
+}
+
 class ExceptionHandler {
-    function handleError($exception) {
+    function handleException($exception) {
         $code = $exception->getCode() == 0 ? 500 : $exception->getCode();
         
         http_response_code($code);
         echo json_encode([
             //'name' => get_class($exception),
+            //'stackTrace' => $exception instanceof Exception ? $exception->getTrace() : [],
             'code' => $code,
             'message' => $exception->getMessage()
         ]);
+    }
+
+    function handleError($errno, $errstr, $errfile, $errline) {
+        if(!in_array($errno, [E_ERROR, E_USER_ERROR, E_CORE_ERROR, E_RECOVERABLE_ERROR, E_PARSE]))
+            return false;
+
+        http_response_code(500);
+        die(json_encode([
+            'code' => 500,
+            'message' => $errstr
+        ]));
+        
     }
 }

@@ -10,8 +10,8 @@ use Zarkiel\Triniel\Attributes\{Route, CallbackAfter, CallbackBefore};
 use Zarkiel\Triniel\Exceptions\HttpException;
 
 /**
- * @author 		Zarkiel
- * @email		zarkiel@gmail.com
+ * @author    Zarkiel
+ * @email     zarkiel@gmail.com
  */
 class Router{
     protected ApiController $controller;
@@ -23,7 +23,12 @@ class Router{
         $this->basePath = $basePath;
     }
 
-    function getCallbacks(string $type): Array{
+    /**
+     * Get the callbacks defined on every method of the controller
+     * @param       string    $type            The type of callback (after or before)
+     * @return      array     $callbacks       Callbacks found on the controller
+     */
+    private function getCallbacks($type): array{
         $callbacks = [];
         $reflectionClass = new ReflectionClass($this->controller);
         $callbacksDefined = $reflectionClass->getAttributes($type);
@@ -35,7 +40,11 @@ class Router{
         return $callbacks;
     }
 
-    function getRoutes(): Array{
+    /**
+     * Get the routes defined on every method of the controller
+     * @return    array    $routes    Routes found on the controller
+     */
+    private function getRoutes(): array{
         $routes = [];
         foreach(get_class_methods($this->controller) As $action){
             $reflectionMethod = new ReflectionMethod($this->controller, $action);
@@ -45,10 +54,38 @@ class Router{
                 $routes[] = [...$route->getArguments(), 'action' => $action];
             }
         }
-        //print_r($routes);
         return $routes;
     }
 
+    /**
+     * Run the callbacks before or after every request
+     * @param    string     $type       The type of callback (after or before)
+     * @param    array      $route      The route that will run the callbacks
+     * @param    array      $matches    Url parameters matched
+     */
+    private function runCallbacks($type, $route, $matches){
+        $callbacks = $this->getCallbacks($type);
+        foreach($callbacks As $callback){
+            if(empty($callback["actions"]))
+                continue;
+
+            if(!empty($callback['onlyFor'])){
+                $callbackActionsFor = explode(',', preg_replace("/ +/", "", $callback["onlyFor"]));
+                if(!in_array($route['action'], $callbackActionsFor))
+                    continue;
+            }
+            
+            $callbackActions = explode(',', preg_replace("/ +/", "", $callback["actions"]));
+            foreach($callbackActions As $callbackAction){
+                call_user_func_array([$this->controller, $callbackAction], $matches);
+            }
+                
+        }
+    }
+
+    /**
+     * Run the route handler and keep listening for requests
+     */
     function run(): void{
         $method = $_SERVER['REQUEST_METHOD'];
         if(strtolower($method) == "options")
@@ -103,25 +140,6 @@ class Router{
 
     }
 
-    function runCallbacks($type, $route, $matches){
-        $callbacks = $this->getCallbacks($type);
-        foreach($callbacks As $callback){
-            if(empty($callback["actions"]))
-                continue;
-
-            if(!empty($callback['onlyFor'])){
-                $callbackActionsFor = explode(',', preg_replace("/ +/", "", $callback["onlyFor"]));
-                if(!in_array($route['action'], $callbackActionsFor))
-                    continue;
-            }
-            
-            $callbackActions = explode(',', preg_replace("/ +/", "", $callback["actions"]));
-            foreach($callbackActions As $callbackAction){
-                call_user_func_array([$this->controller, $callbackAction], $matches);
-            }
-                
-        }
-    }
 }
 
 

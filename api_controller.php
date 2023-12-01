@@ -3,7 +3,7 @@ namespace Zarkiel\Triniel;
 
 use PDO;
 use Zarkiel\Triniel\Attributes\Route;
-use Zarkiel\Triniel\Exceptions\{InvalidTokenException, UnauthorizedException};
+use Zarkiel\Triniel\Exceptions\{BadRequestException, InvalidTokenException, UnauthorizedException, UnprocessableContentException};
 
 
 /**
@@ -120,8 +120,17 @@ class ApiController {
         }
     }
 
-    function getRequestBody(){
-        return json_decode(file_get_contents('php://input'), true);
+    function getRequestBody($requiredParams = ""){
+        $requestBody = json_decode(file_get_contents('php://input'), true);
+        if(!empty($requiredParams)){
+            $params = explode(",", preg_replace("/ +/", "", $requiredParams));
+
+            if(count($requestBody) != count($params) || in_array(false, array_map(fn($param) => isset($requestBody[$param]), $params)))
+                throw new BadRequestException();
+        }
+            
+
+        return $requestBody;
     }
 
     /**
@@ -163,5 +172,25 @@ class ApiController {
 
     function base64UrlEncode(string $text): string {
         return rtrim(strtr(base64_encode($text), '+/', '-_'), '=');
+    }
+
+    function uuid(){
+        // version 4 UUID
+        return sprintf(
+            '%08x-%04x-%04x-%02x%02x-%012x',
+            mt_rand(),
+            mt_rand(0, 65535),
+            bindec(
+                substr_replace(
+                    sprintf('%016b', mt_rand(0, 65535)),
+                    '0100',
+                    11,
+                    4
+                )
+            ),
+            bindec(substr_replace(sprintf('%08b', mt_rand(0, 255)), '01', 5, 2)),
+            mt_rand(0, 255),
+            mt_rand()
+        );
     }
 }
