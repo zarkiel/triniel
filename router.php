@@ -1,11 +1,13 @@
 <?php
 namespace Zarkiel\Triniel;
 
+use ReflectionClass;
+use ReflectionMethod;
+use ReflectionAttribute;
+use PDOException;
 use Zarkiel\Triniel\Exceptions\NotFoundException;
-use Zarkiel\Triniel\Exceptions\MethodNotAllowedException;
-use Zarkiel\Triniel\Attributes\Route;
-use Zarkiel\Triniel\Attributes\CallbackAfter;
-use Zarkiel\Triniel\Attributes\CallbackBefore;
+use Zarkiel\Triniel\Attributes\{Route, CallbackAfter, CallbackBefore};
+use Zarkiel\Triniel\Exceptions\HttpException;
 
 /**
  * @author 		Zarkiel
@@ -23,7 +25,7 @@ class Router{
 
     function getCallbacks(string $type): Array{
         $callbacks = [];
-        $reflectionClass = new \ReflectionClass($this->controller);
+        $reflectionClass = new ReflectionClass($this->controller);
         $callbacksDefined = $reflectionClass->getAttributes($type);
 
         foreach($callbacksDefined As $callback){
@@ -36,8 +38,8 @@ class Router{
     function getRoutes(): Array{
         $routes = [];
         foreach(get_class_methods($this->controller) As $action){
-            $reflectionMethod = new \ReflectionMethod($this->controller, $action);
-            $actionRoutes = $reflectionMethod->getAttributes(Route::class, \ReflectionAttribute::IS_INSTANCEOF);
+            $reflectionMethod = new ReflectionMethod($this->controller, $action);
+            $actionRoutes = $reflectionMethod->getAttributes(Route::class, ReflectionAttribute::IS_INSTANCEOF);
 
             foreach($actionRoutes As $route){
                 $routes[] = [...$route->getArguments(), 'action' => $action];
@@ -83,10 +85,10 @@ class Router{
                         $this->controller->startExecution();
                         call_user_func_array([$this->controller, $route['action']], $matches);
                         $this->runCallbacks(CallbackAfter::class, $route, $matches);
-                    }catch(\PDOException $e){
-                        throw new \Exception($e->getMessage(), 500);
+                    }catch(PDOException $e){
+                        throw new HttpException($e->getMessage(), 500);
                     }
-                    catch(\Exception $e){
+                    catch(HttpException $e){
                         throw $e;
                     }
 

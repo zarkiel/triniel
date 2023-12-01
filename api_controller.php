@@ -1,9 +1,10 @@
 <?php
 namespace Zarkiel\Triniel;
 
+use PDO;
 use Zarkiel\Triniel\Attributes\Route;
-use Zarkiel\Triniel\Exceptions\InvalidTokenException;
-use Zarkiel\Triniel\Exceptions\UnauthorizedException;
+use Zarkiel\Triniel\Exceptions\{InvalidTokenException, UnauthorizedException};
+
 
 /**
  * @author 		Zarkiel
@@ -68,8 +69,8 @@ class ApiController {
 
         $data = DATABASE_CONNECTIONS[$name];
 
-        $this->connections[$name] = new \PDO('mysql:host=' . $data['host'] . ':' . @strval($data['port']) . ';dbname=' . $data['database'] . ';charset=utf8', $data['username'], $data['password']);
-        $this->connections[$name]->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $this->connections[$name] = new PDO('mysql:host=' . $data['host'] . ':' . @strval($data['port']) . ';dbname=' . $data['database'] . ';charset=utf8', $data['username'], $data['password']);
+        $this->connections[$name]->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         return $this->connections[$name];
     }
 
@@ -113,7 +114,7 @@ class ApiController {
         $conn = &$this->getConnection('Core');
         $payload = $this->getTokenPayload();
         
-        $canPerform = $conn->query("SELECT `hasPermission`('{$payload->iss}', '{$moduleId}', '{$operation}') AS permission")->fetch(\PDO::FETCH_ASSOC);
+        $canPerform = $conn->query("SELECT `hasPermission`('{$payload->iss}', '{$moduleId}', '{$operation}') AS permission")->fetch(PDO::FETCH_ASSOC);
         if (@intval($canPerform['permission']) === 0) {
             throw new UnauthorizedException();
         }

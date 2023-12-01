@@ -1,7 +1,8 @@
 <?php
 namespace Zarkiel\Triniel\Exceptions;
+use Exception;
 
-class HttpException extends \Exception {
+class HttpException extends Exception {
 }
 
 class NotFoundException extends HttpException {
