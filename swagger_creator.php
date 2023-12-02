@@ -103,6 +103,9 @@ class SwaggerCreator{
                         401 => [
                             "description" => 'Unauthorized'
                         ],
+                    ],
+                    "security" => [
+                        ['token' => []]
                     ]
                 ];
 
@@ -194,7 +197,16 @@ class SwaggerCreator{
             'openapi' => '3.0.3',
             'info' => $this->getInfo(),
             'tags' => $this->getTags(),
-            'paths' => $this->getPaths()
+            'paths' => $this->getPaths(),
+            'components' => [
+                'securitySchemes' => [
+                    'token' => [
+                        'type' => 'apiKey',
+                        'name' => 'Authorization',
+                        'in' => 'header'
+                    ]
+                ]
+            ]
         ];
     }
 
