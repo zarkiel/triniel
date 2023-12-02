@@ -86,7 +86,8 @@ class SwaggerCreator{
                 //$routes[] = [...$route->getArguments(), 'action' => $action];
                 $arguments = $route->getArguments();
 
-                preg_match_all('/\((.+)\)/', $arguments['path'], $matches);
+                preg_match_all('/\((.+)\)/U', $arguments['path'], $matches);
+                //print_r($matches);
                 $path = str_replace($matches[0], array_map(fn($parameter) => '{'.$parameter->name.'}', $parameters), $arguments['path']);
                 
                 $pathSpec = [
