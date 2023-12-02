@@ -26,15 +26,32 @@ class ApiController {
     }
 
     #[Route(path: "/__version__/", method: "GET")]
-    function apiVersion() {
+    function __version__() {
         $this->renderRaw([
             'message' => 'Common API'
         ]);
     }
 
+    /**
+     * @summary Returns the swagger specification
+     * @tag     Triniel Core
+     */
+    #[Route(path: "/__swagger__/", method: "GET")]
+    function __swagger__(){
+        echo (new SwaggerCreator($this))->getJSON();
+    }
+
+    /**
+     * @summary Display the swagger UI
+     * @tag     Triniel Core
+     */
     #[Route(path: "/__doc__/", method: "GET")]
     function __doc__(){
-        echo (new SwaggerCreator($this))->getJSON();
+        header('Content-Type: text/html');
+        if(!isset($_GET['spec'])){
+            header('Location: '.$_SERVER['REQUEST_URI'].'?spec='.$this->getBasePath().'/__swagger__/');
+        }
+        echo (new SwaggerCreator($this))->getViewer();
     }
 
     function startExecution() {

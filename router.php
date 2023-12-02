@@ -1,10 +1,7 @@
 <?php
 namespace Zarkiel\Triniel;
 
-use ReflectionClass;
-use ReflectionMethod;
-use ReflectionAttribute;
-use PDOException;
+use ReflectionClass, ReflectionMethod, ReflectionAttribute, PDOException;
 use Zarkiel\Triniel\Exceptions\NotFoundException;
 use Zarkiel\Triniel\Attributes\{Route, CallbackAfter, CallbackBefore};
 use Zarkiel\Triniel\Exceptions\HttpException;

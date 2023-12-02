@@ -1,7 +1,6 @@
 <?php
 namespace Zarkiel\Triniel\Exceptions;
 use Exception;
-use Error;
 
 class HttpException extends Exception {
 }
