@@ -1,4 +1,13 @@
 <?php
+/*
+ * This file is part of the Triniel package.
+ *
+ * (c) Carlos Calatayud <admin@zarkiel.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zarkiel\Triniel;
 
 use ReflectionClass, ReflectionMethod, ReflectionAttribute;
@@ -6,8 +15,9 @@ use Zarkiel\Triniel\ApiController;
 use Zarkiel\Triniel\Attributes\Route;
 
 /**
- * @author    Zarkiel
- * @email     zarkiel@gmail.com
+ * Helper class to create automatic Swagger specifications
+ * 
+ * @author Carlos Calatayud <admin@zarkiel.com>
  */
 class SwaggerCreator{
     private $controller;

@@ -1,4 +1,13 @@
 <?php
+/*
+ * This file is part of the Triniel package.
+ *
+ * (c) Carlos Calatayud <admin@zarkiel.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zarkiel\Triniel;
 
 use PDO;
@@ -7,8 +16,9 @@ use Zarkiel\Triniel\Attributes\Route;
 use Zarkiel\Triniel\Exceptions\{BadRequestException, InvalidTokenException, UnauthorizedException, UnprocessableContentException};
 
 /**
- * @author 		Zarkiel
- * @email		zarkiel@gmail.com
+ * Class used to be used a Controller specification
+ * 
+ * @author Carlos Calatayud <admin@zarkiel.com>
  */
 class ApiController {
 

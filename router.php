@@ -1,4 +1,13 @@
 <?php
+/*
+ * This file is part of the Triniel package.
+ *
+ * (c) Carlos Calatayud <admin@zarkiel.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Zarkiel\Triniel;
 
 use ReflectionClass, ReflectionMethod, ReflectionAttribute, PDOException;
@@ -7,8 +16,9 @@ use Zarkiel\Triniel\Attributes\{Route, CallbackAfter, CallbackBefore};
 use Zarkiel\Triniel\Exceptions\HttpException;
 
 /**
- * @author    Zarkiel
- * @email     zarkiel@gmail.com
+ * Class used to handle routes of a controller
+ * 
+ * @author Carlos Calatayud <admin@zarkiel.com>
  */
 class Router{
     protected ApiController $controller;
