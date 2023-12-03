@@ -79,8 +79,8 @@ class Router{
             if(empty($callback["actions"]))
                 continue;
 
-            if(!empty($callback['onlyFor'])){
-                $callbackActionsFor = explode(',', preg_replace("/ +/", "", $callback["onlyFor"]));
+            if(!empty($callback['only'])){
+                $callbackActionsFor = explode(',', preg_replace("/ +/", "", $callback["only"]));
                 if(!in_array($action, $callbackActionsFor))
                     continue;
             }
