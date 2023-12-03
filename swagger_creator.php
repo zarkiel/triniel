@@ -72,66 +72,40 @@ class SwaggerCreator{
         return $tags;
     }
 
-    function getPaths(){
-        $paths = [];
-        $controllerTags = $this->getTags();
+    function parseMethodParams($tagParams){
+        $params = [];
+        foreach($tagParams As $parameter){
+            $chunks = explode(" ", $parameter);
+            $type = array_shift($chunks);
+            $name = str_replace('$', '', array_shift($chunks));
+            $description = implode(' ', $chunks);
 
-        foreach(get_class_methods($this->controller) As $action){
-            $reflectionMethod = new ReflectionMethod($this->controller, $action);
-            $actionRoutes = $reflectionMethod->getAttributes(Route::class, ReflectionAttribute::IS_INSTANCEOF);
-            $parameters = $reflectionMethod->getParameters();
-
-            foreach($actionRoutes As $route){
-                $tags = $this->getDocTags($reflectionMethod->getDocComment());
-                //$routes[] = [...$route->getArguments(), 'action' => $action];
-                $arguments = $route->getArguments();
-
-                preg_match_all('/\((.+)\)/U', $arguments['path'], $matches);
-                //print_r($matches);
-                $path = str_replace($matches[0], array_map(fn($parameter) => '{'.$parameter->name.'}', $parameters), $arguments['path']);
-                
-                $pathSpec = [
-                    "summary" => $tags['summary'][0] ?? '',
-                    "tags" => isset($tags['tag']) ? $tags['tag'] : (count($controllerTags) > 0 ? [$controllerTags[0]['name']] : []),
-                    "parameters" => array_merge($this->parseMethodHeaders($tags['header']), $this->parseMethodParams($tags['param'])),
-                    "responses" => [
-                        200 => [
-                            "description" => 'OK'
-                        ],
-                        404 => [
-                            "description" => 'Not Found'
-                        ],
-                        401 => [
-                            "description" => 'Unauthorized'
-                        ],
-                    ],
-                    "security" => [
-                        ['token' => []]
-                    ]
-                ];
-
-                if(in_array(strtolower($arguments['method']), ['post', 'put'])){
-                    $pathSpec['requestBody'] = [
-                        'content' => [
-                            'application/json' => [
-                                'schema' => [
-                                    'type' => 'object',
-                                    'properties' => $this->getRequestBodySchema($reflectionMethod)
-                                ]
-                            ]
-                        ]
-                    ];
-                }
-
-                $paths[$this->controller->getBasePath().$path][strtolower($arguments['method'])] = $pathSpec;
-            }
+            $params[str_replace('$', '', $name)] = [
+                'type' => $type,
+                'description' => $description
+            ];
         }
-        return $paths;
+
+        return $params;
+    }
+
+    function getMethodParams($parameters, $tagParams){
+        $tagParams = $this->parseMethodParams($tagParams);
+        return array_map(fn($parameter) => [
+            'name' => $parameter->name,
+            'description' => $tagParams[$parameter->name]['description'] ?? "",
+            'required' => true,
+                'in' => 'path',
+                'schema' => [
+                    'type' => $tagParams[$parameter->name]['type'] ?? "string",
+                ]
+            ]
+        , $parameters);
     }
 
     function getRequestBodySchema($reflector){
         $filename = $reflector->getFileName();
-        $startLine = $reflector->getStartLine() - 1; // it's actually - 1, otherwise you wont get the function() block
+        $startLine = $reflector->getStartLine() - 1; // it's actually - 1, otherwise it wont get the function() block
         $endLine = $reflector->getEndLine();
         $length = $endLine - $startLine;
 
@@ -158,25 +132,13 @@ class SwaggerCreator{
         return array_combine($requestBodyParamsKeys, $requestBodyParamsValues);
     }
 
-    function parseMethodParams($tagParams){
-        return array_map(function($parameter){
-            $chunks = explode(" ", $parameter);
-            $type = array_shift($chunks);
-            $name = str_replace('$', '', array_shift($chunks));
-            $description = implode(' ', $chunks);
-            return [
-                'name' => $name,
-                'description' => $description,
-                'required' => true,
-                'in' => 'path',
-                'schema' => [
-                    'type' => $type,
-                ]
-            ];
-        }, $tagParams ?? []);
-    }
+    function parseMethodHeaders($route, $tagParams){
+        
+        $tagParams = $tagParams ?? [];
+        if(in_array('validateToken', $route['callbacksBefore'])){
+            $tagParams[] = 'Authorization Authorization: Bearer $token';
+        }            
 
-    function parseMethodHeaders($tagParams){
         return array_map(function($parameter){
             $chunks = explode(" ", $parameter);
             $name = array_shift($chunks);
@@ -190,8 +152,60 @@ class SwaggerCreator{
                     'type' => "string",
                 ]
             ];
-        }, $tagParams ?? []);
+        }, $tagParams);
     }
+
+    function getPaths(){
+        $paths = [];
+        $controllerTags = $this->getTags();
+        $router = new Router($this->controller);
+        foreach($router->getRoutes() As $route){
+            $action = $route['action'];
+            $reflectionMethod = new ReflectionMethod($this->controller, $action);
+            $tags = $this->getDocTags($reflectionMethod->getDocComment());
+            $parameters = $reflectionMethod->getParameters();
+            preg_match_all('/\((.+)\)/U', $route['path'], $matches);
+            $path = str_replace($matches[0], array_map(fn($parameter) => '{'.$parameter->name.'}', $parameters), $route['path']);
+            $pathSpec = [
+                "summary" => $tags['summary'][0] ?? '',
+                "tags" => isset($tags['tag']) ? $tags['tag'] : (count($controllerTags) > 0 ? [$controllerTags[0]['name']] : []),
+                "parameters" => array_merge($this->parseMethodHeaders($route, $tags['header']), $this->getMethodParams($parameters, $tags['params'])),
+                "params" => $tags['param'],
+                "responses" => [
+                    200 => [
+                        "description" => 'OK'
+                    ],
+                    404 => [
+                        "description" => 'Not Found'
+                    ],
+                    401 => [
+                        "description" => 'Unauthorized'
+                    ],
+                ],
+                "security" => [
+                    ['token' => []]
+                ]
+            ];
+
+            if(in_array(strtolower($route['method']), ['post', 'put'])){
+                $pathSpec['requestBody'] = [
+                    'content' => [
+                        'application/json' => [
+                            'schema' => [
+                                'type' => 'object',
+                                'properties' => $this->getRequestBodySchema($reflectionMethod)
+                            ]
+                        ]
+                    ]
+                ];
+            }
+
+            $paths[$this->controller->getBasePath().$path][strtolower($route['method'])] = $pathSpec;
+        }
+        return $paths;
+    }
+
+    
 
     function getResult(){
         return [
