@@ -51,17 +51,50 @@ class Router{
      * Get the routes defined on every method of the controller
      * @return    array    $routes    Routes found on the controller
      */
-    private function getRoutes(): array{
+    function getRoutes(): array{
         $routes = [];
         foreach(get_class_methods($this->controller) As $action){
             $reflectionMethod = new ReflectionMethod($this->controller, $action);
             $actionRoutes = $reflectionMethod->getAttributes(Route::class, ReflectionAttribute::IS_INSTANCEOF);
 
             foreach($actionRoutes As $route){
-                $routes[] = [...$route->getArguments(), 'action' => $action];
+                $routes[] = [
+                    ...$route->getArguments(), 
+                    'action' => $action, 
+                    'callbacksBefore' => $this->getMethodCallbacks($action, CallbackBefore::class),
+                    'callbacksAfter' => $this->getMethodCallbacks($action, CallbackAfter::class),
+                ];
             }
         }
         return $routes;
+    }
+
+    private function getMethodCallbacks($action, $type){
+        $callbacks = $this->getCallbacks($type);
+        $methodCallbacks = [];
+        foreach($callbacks As $callback){
+            if(in_array($action, ['__doc__', '__swagger__']))
+                continue;
+
+            if(empty($callback["actions"]))
+                continue;
+
+            if(!empty($callback['onlyFor'])){
+                $callbackActionsFor = explode(',', preg_replace("/ +/", "", $callback["onlyFor"]));
+                if(!in_array($action, $callbackActionsFor))
+                    continue;
+            }
+
+            if(!empty($callback['exclude'])){
+                $excludeActions = explode(',', preg_replace("/ +/", "", $callback["exclude"]));
+                if(in_array($action, $excludeActions))
+                    continue;
+            }
+
+            $methodCallbacks = array_merge($methodCallbacks, explode(',', preg_replace("/ +/", "", $callback["actions"])));
+        }
+
+        return $methodCallbacks;
     }
 
     /**
@@ -71,32 +104,8 @@ class Router{
      * @param    array      $matches    Url parameters matched
      */
     private function runCallbacks($type, $route, $matches){
-        if(str_starts_with($route['action'], '__'))
-            return;
-
-        $callbacks = $this->getCallbacks($type);
-        foreach($callbacks As $callback){
-            if(empty($callback["actions"]))
-                continue;
-
-            if(!empty($callback['onlyFor'])){
-                $callbackActionsFor = explode(',', preg_replace("/ +/", "", $callback["onlyFor"]));
-                if(!in_array($route['action'], $callbackActionsFor))
-                    continue;
-            }
-
-            if(!empty($callback['exclude'])){
-                $excludeActions = explode(',', preg_replace("/ +/", "", $callback["exclude"]));
-                if(in_array($route['action'], $excludeActions))
-                    continue;
-            }
-            
-            $callbackActions = explode(',', preg_replace("/ +/", "", $callback["actions"]));
-            foreach($callbackActions As $callbackAction){
-                call_user_func_array([$this->controller, $callbackAction], $matches);
-            }
-                
-        }
+        foreach($route[$type] As $callback)
+            call_user_func_array([$this->controller, $callback], $matches);
     }
 
     /**
@@ -127,6 +136,7 @@ class Router{
             if(preg_match('#'.$route['path'].'#'.($this->caseSensitive ? '':'i'), $path, $matches)){
                 
                 if(strtolower($route['method']) == strtolower($method)){
+                    
                     $pathMatch = true;
                     array_shift($matches);
                     if($this->basePath != '' && $this->basePath != '/'){
@@ -134,10 +144,10 @@ class Router{
                     }
 
                     try{
-                        $this->runCallbacks(CallbackBefore::class, $route, $matches);
+                        $this->runCallbacks('callbacksBefore', $route, $matches);
                         $this->controller->startExecution();
                         call_user_func_array([$this->controller, $route['action']], $matches);
-                        $this->runCallbacks(CallbackAfter::class, $route, $matches);
+                        $this->runCallbacks('callbacksAfter', $route, $matches);
                     }catch(PDOException $e){
                         throw new HttpException($e->getMessage(), 500);
                     }
