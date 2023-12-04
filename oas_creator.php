@@ -172,7 +172,7 @@ class OASCreator{
             $pathSpec = [
                 "summary" => $tags['summary'][0] ?? '',
                 "tags" => isset($tags['tag']) ? $tags['tag'] : (count($controllerTags) > 0 ? [$controllerTags[0]['name']] : []),
-                "parameters" => array_merge($this->parseMethodHeaders($route, $tags['header'] ?? []), $this->getMethodParams($parameters, $tags['params'] ?? [])),
+                "parameters" => array_merge($this->parseMethodHeaders($route, $tags['header'] ?? []), $this->getMethodParams($parameters, $tags['param'] ?? [])),
                 "params" => $tags['param'] ?? [],
                 "responses" => [
                     200 => [
