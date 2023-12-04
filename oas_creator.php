@@ -224,7 +224,7 @@ class OASCreator{
                 ];
             }
 
-            if(in_array(strtolower($route['method']), ['post', 'put'])){
+            if(in_array(strtolower($route['method']), ['post', 'put', 'patch'])){
                 $pathSpec['requestBody'] = [
                     'content' => [
                         'application/json' => [
