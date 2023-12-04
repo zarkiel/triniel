@@ -11,9 +11,8 @@
 namespace Zarkiel\Triniel;
 
 use PDO;
-use Zarkiel\Triniel\SwaggerCreator;
 use Zarkiel\Triniel\Attributes\Route;
-use Zarkiel\Triniel\Exceptions\{BadRequestException, InvalidTokenException, UnauthorizedException, UnprocessableContentException};
+use Zarkiel\Triniel\Exceptions\{BadRequestException, InvalidTokenException, UnauthorizedException};
 
 /**
  * Class used to be used a Controller specification

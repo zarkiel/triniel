@@ -12,6 +12,7 @@
 
 use ReflectionClass, ReflectionMethod;
 use Zarkiel\Triniel\ApiController;
+use Zarkiel\Triniel\Exceptions\{BadRequestException, NotFoundException, UnauthorizedException};
 
 /**
  * Helper class to create automatic Open Api Specifications
@@ -160,6 +161,7 @@ class OASCreator{
         $paths = [];
         $controllerTags = $this->getTags();
         $router = new Router($this->controller);
+        $exceptions = [new NotFoundException(), new UnauthorizedException(), new BadRequestException()];
         foreach($router->getRoutes() As $route){
             $action = $route['action'];
             $reflectionMethod = new ReflectionMethod($this->controller, $action);
@@ -174,19 +176,53 @@ class OASCreator{
                 "params" => $tags['param'] ?? [],
                 "responses" => [
                     200 => [
-                        "description" => 'OK'
-                    ],
-                    404 => [
-                        "description" => 'Not Found'
-                    ],
-                    401 => [
-                        "description" => 'Unauthorized'
+                        "description" => 'OK',
+                        'content' => [
+                            'application/json' => [
+                                'schema' => [
+                                    'type' => 'object',
+                                    'properties' => [
+                                        'delay' => [
+                                            'type' => 'integer',
+                                            'example' => 0.0001
+                                        ],
+                                        'data' => [
+                                            'type' => 'object',
+                                            'example' => []
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
                     ],
                 ],
                 "security" => [
                     ['token' => []]
                 ]
             ];
+
+            foreach($exceptions As $exception){
+                $pathSpec['responses'][$exception->getCode()] = [
+                    "description" => $exception->getMessage(),
+                    'content' => [
+                        'application/json' => [
+                            'schema' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'code' => [
+                                        'type' => 'integer',
+                                        'example' => $exception->getCode()
+                                    ],
+                                    'message' => [
+                                        'type' => 'string',
+                                        'example' => $exception->getMessage()
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ];
+            }
 
             if(in_array(strtolower($route['method']), ['post', 'put'])){
                 $pathSpec['requestBody'] = [

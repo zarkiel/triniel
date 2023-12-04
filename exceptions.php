@@ -26,7 +26,7 @@ class MethodNotAllowedException extends HttpException {
 }
 
 class UnauthorizedException extends HttpException {
-    function __construct($message = 'Access Denied', $code = 401) {
+    function __construct($message = 'Unauthorized', $code = 401) {
         parent::__construct($message, $code);
     }
 }
