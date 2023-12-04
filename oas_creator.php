@@ -8,18 +8,17 @@
  * file that was distributed with this source code.
  */
 
-namespace Zarkiel\Triniel;
+ namespace Zarkiel\Triniel;
 
-use ReflectionClass, ReflectionMethod, ReflectionAttribute;
+use ReflectionClass, ReflectionMethod;
 use Zarkiel\Triniel\ApiController;
-use Zarkiel\Triniel\Attributes\Route;
 
 /**
- * Helper class to create automatic Swagger specifications
+ * Helper class to create automatic Open Api Specifications
  * 
  * @author Carlos Calatayud <admin@zarkiel.com>
  */
-class SwaggerCreator{
+class OASCreator{
     private $controller;
 
     function __construct(ApiController $controller){
@@ -43,8 +42,10 @@ class SwaggerCreator{
         }
 
         $tags = array_map(function($tag){
+            $chunks = explode(':', $tag);
             return [
-                'name' => $tag
+                'name' => trim(array_shift($chunks)),
+                'description' => trim(implode('', $chunks))
             ];
         }, $tags['tag']);
 
@@ -169,8 +170,8 @@ class SwaggerCreator{
             $pathSpec = [
                 "summary" => $tags['summary'][0] ?? '',
                 "tags" => isset($tags['tag']) ? $tags['tag'] : (count($controllerTags) > 0 ? [$controllerTags[0]['name']] : []),
-                "parameters" => array_merge($this->parseMethodHeaders($route, $tags['header']), $this->getMethodParams($parameters, $tags['params'])),
-                "params" => $tags['param'],
+                "parameters" => array_merge($this->parseMethodHeaders($route, $tags['header'] ?? []), $this->getMethodParams($parameters, $tags['params'] ?? [])),
+                "params" => $tags['param'] ?? [],
                 "responses" => [
                     200 => [
                         "description" => 'OK'
@@ -209,7 +210,7 @@ class SwaggerCreator{
 
     function getResult(){
         return [
-            'openapi' => '3.0.3',
+            'openapi' => '3.1.0',
             'info' => $this->getInfo(),
             'tags' => $this->getTags(),
             'paths' => $this->getPaths(),

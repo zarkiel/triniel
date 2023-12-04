@@ -43,25 +43,25 @@ class ApiController {
     }
 
     /**
-     * @summary Returns the swagger specification
+     * @summary Returns the Open Api Specification
+     * @tag     Triniel Core
+     */
+    #[Route(path: "/__oas__/", method: "GET")]
+    function __oas__(){
+        echo (new OASCreator($this))->getJSON();
+    }
+
+    /**
+     * @summary Display the Swagger UI
      * @tag     Triniel Core
      */
     #[Route(path: "/__swagger__/", method: "GET")]
     function __swagger__(){
-        echo (new SwaggerCreator($this))->getJSON();
-    }
-
-    /**
-     * @summary Display the swagger UI
-     * @tag     Triniel Core
-     */
-    #[Route(path: "/__doc__/", method: "GET")]
-    function __doc__(){
         header('Content-Type: text/html');
         if(!isset($_GET['spec'])){
-            header('Location: '.$_SERVER['REQUEST_URI'].'?spec='.$this->getBasePath().'/__swagger__/');
+            header('Location: '.$_SERVER['REQUEST_URI'].'?spec='.$this->getBasePath().'/__oas__/');
         }
-        echo (new SwaggerCreator($this))->getViewer();
+        echo (new OASCreator($this))->getViewer();
     }
 
     function startExecution() {

@@ -10,5 +10,5 @@
 require_once 'attributes.php';
 require_once 'exceptions.php';
 require_once 'router.php';
-require_once 'swagger_creator.php';
+require_once 'oas_creator.php';
 require_once 'api_controller.php';

@@ -73,7 +73,7 @@ class Router{
         $callbacks = $this->getCallbacks($type);
         $methodCallbacks = [];
         foreach($callbacks As $callback){
-            if(in_array($action, ['__doc__', '__swagger__']))
+            if(in_array($action, ['__oas__', '__swagger__', '__version__']))
                 continue;
 
             if(empty($callback["actions"]))
