@@ -173,7 +173,7 @@ class OASCreator{
                 "summary" => $tags['summary'][0] ?? '',
                 "tags" => isset($tags['tag']) ? $tags['tag'] : (count($controllerTags) > 0 ? [$controllerTags[0]['name']] : []),
                 "parameters" => array_merge($this->parseMethodHeaders($route, $tags['header'] ?? []), $this->getMethodParams($parameters, $tags['param'] ?? [])),
-                "params" => $tags['param'] ?? [],
+
                 "responses" => [
                     200 => [
                         "description" => 'OK',
@@ -230,7 +230,7 @@ class OASCreator{
                         'application/json' => [
                             'schema' => [
                                 'type' => 'object',
-                                'properties' => $this->getRequestBodySchema($reflectionMethod)
+                                'properties' => (object) $this->getRequestBodySchema($reflectionMethod)
                             ]
                         ]
                     ]
@@ -263,7 +263,7 @@ class OASCreator{
     }
 
     function getJSON(){
-        return json_encode($this->getResult());
+        return json_encode($this->getResult(), JSON_UNESCAPED_SLASHES);
     }
 
 
