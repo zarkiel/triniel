@@ -162,6 +162,9 @@ class ApiController {
 
     function getRequestBody($requiredParams = ""){
         $requestBody = json_decode(file_get_contents('php://input'), true);
+        if(is_null($requestBody))
+            throw new BadRequestException();
+        
         if(!empty($requiredParams)){
             $params = explode(",", preg_replace("/ +/", "", $requiredParams));
 
