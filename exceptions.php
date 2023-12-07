@@ -50,16 +50,29 @@ class BadRequestException extends HttpException {
 }
 
 class ExceptionHandler {
+
+    private $fullTrace;
+
+    function __construct($fullTrace = false){
+        $this->fullTrace = $fullTrace;
+    }
+
     function handleException($exception) {
         $code = $exception->getCode() == 0 ? 500 : $exception->getCode();
         
         http_response_code($code);
-        echo json_encode([
-            //'name' => get_class($exception),
-            //'stackTrace' => $exception instanceof Exception ? $exception->getTrace() : [],
+
+        $info = [
             'code' => $code,
             'message' => $exception->getMessage()
-        ]);
+        ];
+
+        if($this->fullTrace){
+            $info["name"] = get_class($exception);
+            $info["stackTrace"] = $exception->getTrace();
+        }
+        
+        echo json_encode($info);
     }
 
 }

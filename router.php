@@ -11,9 +11,8 @@
 namespace Zarkiel\Triniel;
 
 use ReflectionClass, ReflectionMethod, ReflectionAttribute, PDOException;
-use Zarkiel\Triniel\Exceptions\NotFoundException;
+use Zarkiel\Triniel\Exceptions\{HttpException, NotFoundException, ExceptionHandler};
 use Zarkiel\Triniel\Attributes\{Route, CallbackAfter, CallbackBefore};
-use Zarkiel\Triniel\Exceptions\HttpException;
 
 /**
  * Class used to handle routes of a controller
@@ -22,12 +21,14 @@ use Zarkiel\Triniel\Exceptions\HttpException;
  */
 class Router{
     protected ApiController $controller;
+    protected ExceptionHandler $exceptionHandler;
     protected string $basePath;
     protected bool $caseSensitive = true;
 
-    function __construct(ApiController $controller){
+    function __construct(ApiController $controller, ExceptionHandler $exceptionHandler = null){
         $this->controller = $controller;
         $this->basePath = $controller->getBasePath();
+        $this->exceptionHandler = $exceptionHandler;
     }
 
     /**
@@ -112,6 +113,10 @@ class Router{
      * Run the route handler and keep listening for requests
      */
     function run(): void{
+        if(!is_null($this->exceptionHandler)){
+            set_exception_handler(array($this->exceptionHandler, 'handleException'));
+        }
+
         $method = $_SERVER['REQUEST_METHOD'];
         if(strtolower($method) == "options")
             return;
