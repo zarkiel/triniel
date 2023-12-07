@@ -165,7 +165,7 @@ class OASCreator{
         foreach($router->getRoutes() As $route){
             $action = $route['action'];
             $reflectionMethod = new ReflectionMethod($this->controller, $action);
-            $tags = $this->getDocTags($reflectionMethod->getDocComment());
+            $tags = !is_null($route["tags"]) ? $route["tags"] : $this->getDocTags($reflectionMethod->getDocComment());
             $parameters = $reflectionMethod->getParameters();
             preg_match_all('/\((.+)\)/U', $route['path'], $matches);
             $path = str_replace($matches[0], array_map(fn($parameter) => '{'.$parameter->name.'}', $parameters), $route['path']);
