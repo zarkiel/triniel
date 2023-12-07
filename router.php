@@ -55,14 +55,14 @@ class Router{
         $routes = [];
         foreach(get_class_methods($this->controller) As $action){
             $reflectionMethod = new ReflectionMethod($this->controller, $action);
-            $actionRoutes = $reflectionMethod->getAttributes(Route::class, ReflectionAttribute::IS_INSTANCEOF);
+            $actionRoutes = $reflectionMethod->getAttributes("Route");
 
             foreach($actionRoutes As $route){
                 $routes[] = [
                     ...$route->getArguments(), 
                     'action' => $action, 
-                    'callbacksBefore' => $this->getMethodCallbacks($action, CallbackBefore::class),
-                    'callbacksAfter' => $this->getMethodCallbacks($action, CallbackAfter::class),
+                    'callbacksBefore' => $this->getMethodCallbacks($action, "CallbackBefore"),
+                    'callbacksAfter' => $this->getMethodCallbacks($action, "CallbackAfter"),
                 ];
             }
         }
