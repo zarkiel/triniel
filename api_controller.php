@@ -23,11 +23,12 @@ class ApiController {
 
     private $startExecutionTime = 0;
     private $endExecutionTime = 0;
-    protected $connections = [];
     private $basePath = "";
+    private $connectionsData = [];
 
-    function __construct($basePath){
+    function __construct($basePath, $connectionsData){
         $this->basePath = $basePath;
+        $this->connectionsData = $connectionsData;
     }
 
     function getBasePath(){
@@ -64,11 +65,11 @@ class ApiController {
     }
 
     function startExecution() {
-        $this->startExecutionTime = $this->getMicrotime();
+        $this->startExecutionTime = microtime(true);
     }
 
     function endExecution() {
-        $this->endExecutionTime = $this->getMicrotime();
+        $this->endExecutionTime = microtime(true);
     }
 
     function getExecutionTime() {
@@ -97,34 +98,15 @@ class ApiController {
         return !$this->isProduction();
     }
 
-    function &getConnection(string $name) {
-        if(isset($this->connections[$name]))
-            return $this->connections[$name];
-
-        if (!defined('DATABASE_CONNECTIONS'))
-            throw new \Exception('No Database Connections');
-
-        if (!isset(DATABASE_CONNECTIONS[$name]))
+    function getConnection(string $name) {
+        if (!isset($this->connectionsData[$name]))
             throw new \Exception('Connection Not Found');
 
-        $data = DATABASE_CONNECTIONS[$name];
+        $data = $this->connectionsData[$name];
 
-        $this->connections[$name] = new PDO('mysql:host=' . $data['host'] . ':' . @strval($data['port']) . ';dbname=' . $data['database'] . ';charset=utf8', $data['username'], $data['password']);
-        $this->connections[$name]->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        return $this->connections[$name];
-    }
-
-    function closeConnections(){
-        if(count($this->connections) > 0)
-            foreach($this->connections As $key => $connection){
-                $this->connections[$key] = null;
-                unset($this->connections[$key]);
-            }
-    }
-
-    function getMicrotime() {
-        list($usec, $sec) = explode(" ", microtime());
-        return ((float) $usec + (float) $sec);
+        $connection = new PDO('mysql:host=' . $data['host'] . ':' . @strval($data['port']) . ';dbname=' . $data['database'] . ';charset=utf8', $data['username'], $data['password']);
+        $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        return $connection;
     }
 
     function getHeaderValue(string $name) {
@@ -151,7 +133,7 @@ class ApiController {
     }
 
     function canPerform(string $moduleId, int $operation){
-        $conn = &$this->getConnection('Core');
+        $conn = $this->getConnection('Core');
         $payload = $this->getTokenPayload();
         
         $canPerform = $conn->query("SELECT `hasPermission`('{$payload->iss}', '{$moduleId}', '{$operation}') AS permission")->fetch(PDO::FETCH_ASSOC);
@@ -212,7 +194,6 @@ class ApiController {
 
         return true;
     }
-
 
     function base64UrlEncode(string $text): string {
         return rtrim(strtr(base64_encode($text), '+/', '-_'), '=');
