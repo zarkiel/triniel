@@ -62,15 +62,4 @@ class ExceptionHandler {
         ]);
     }
 
-    function handleError($errno, $errstr, $errfile, $errline) {
-        if(!in_array($errno, [E_ERROR, E_USER_ERROR, E_CORE_ERROR, E_RECOVERABLE_ERROR, E_PARSE]))
-            return false;
-
-        http_response_code(500);
-        die(json_encode([
-            'code' => 500,
-            'message' => $errstr
-        ]));
-        
-    }
 }
