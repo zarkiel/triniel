@@ -10,7 +10,7 @@
 
 namespace Zarkiel\Triniel;
 
-use PDO;
+use Exception, PDO;
 use Zarkiel\Triniel\Attributes\Route;
 use Zarkiel\Triniel\Exceptions\{BadRequestException, InvalidTokenException, UnauthorizedException};
 
@@ -33,35 +33,6 @@ class ApiController {
 
     function getBasePath(){
         return $this->basePath;
-    }
-
-    #[Route(path: "/__version__/", method: "GET")]
-    function __version__() {
-        $this->renderRaw([
-            'message' => 'Common API'
-        ]);
-    }
-
-    /**
-     * @summary Returns the Open Api Specification
-     * @tag     Triniel Core
-     */
-    #[Route(path: "/__oas__/", method: "GET")]
-    function __oas__(){
-        echo (new OASCreator($this))->getJSON();
-    }
-
-    /**
-     * @summary Display the Swagger UI
-     * @tag     Triniel Core
-     */
-    #[Route(path: "/__swagger__/", method: "GET")]
-    function __swagger__(){
-        header('Content-Type: text/html');
-        if(!isset($_GET['spec'])){
-            header('Location: '.$_SERVER['REQUEST_URI'].'?spec='.$this->getBasePath().'/__oas__/');
-        }
-        echo (new OASCreator($this))->getViewer();
     }
 
     function startExecution() {
@@ -90,20 +61,11 @@ class ApiController {
         ]);
     }
 
-    function isProduction() {
-        return ENVIRONMENT != null && ENVIRONMENT === strtolower('PROD');
-    }
-
-    function isDevelopment() {
-        return !$this->isProduction();
-    }
-
     function getConnection(string $name) {
         if (!isset($this->connectionsData[$name]))
-            throw new \Exception('Connection Not Found');
+            throw new Exception('Connection Not Found');
 
         $data = $this->connectionsData[$name];
-
         $connection = new PDO('mysql:host=' . $data['host'] . ':' . @strval($data['port']) . ';dbname=' . $data['database'] . ';charset=utf8', $data['username'], $data['password']);
         $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         return $connection;
@@ -144,20 +106,32 @@ class ApiController {
 
     function getRequestBody($requiredParams = ""){
         $requestBody = json_decode(file_get_contents('php://input'), true);
+
         if(is_null($requestBody))
-            throw new BadRequestException();
+            throw new BadRequestException("Request body not found");
         
         if(!empty($requiredParams)){
             $params = explode(",", preg_replace("/ +/", "", $requiredParams));
 
-            if(count($requestBody) != count($params) || in_array(false, array_map(fn($param) => isset($requestBody[$param]), $params)))
-                throw new BadRequestException();
+            if(in_array(false, array_map(fn($param) => isset($requestBody[$param]), $params)))
+                throw new BadRequestException("Required params not found");
         }
             
 
         return $requestBody;
     }
 
+    function createToken($payload) {
+        if(!defined("KEY_CRYPT")){
+            throw new Exception("Constant KEY_CRYPT Not Found");
+        }
+
+        $headerEncoded = $this->base64UrlEncode(json_encode(["alg" => "HS512", "typ" => "JWT"]));
+        $payloadEncoded = $this->base64UrlEncode(json_encode($payload));
+        $signature = $this->base64UrlEncode(hash_hmac("SHA512", $headerEncoded.".".$payloadEncoded, KEY_CRYPT, true));
+
+        return $headerEncoded.".".$payloadEncoded.".".$signature;
+    }
 
     /**
      * Función para validar token
@@ -217,5 +191,17 @@ class ApiController {
             mt_rand(0, 255),
             mt_rand()
         );
+    }
+
+    function __oas__(){
+        echo (new OASCreator($this))->getJSON();
+    }
+
+    function __swagger__(){
+        header("Content-Type: text/html");
+        if(!isset($_GET["spec"])){
+            header("Location: ".$_SERVER["REQUEST_URI"]."?spec=".$this->getBasePath()."/__oas__/");
+        }
+        echo (new OASCreator($this))->getViewer();
     }
 }
