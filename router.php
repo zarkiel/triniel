@@ -21,11 +21,11 @@ use Zarkiel\Triniel\Attributes\{Route, CallbackAfter, CallbackBefore};
  */
 class Router{
     protected ApiController $controller;
-    protected ExceptionHandler $exceptionHandler;
+    protected ExceptionHandler|null $exceptionHandler;
     protected string $basePath;
     protected bool $caseSensitive = true;
 
-    function __construct(ApiController $controller, ExceptionHandler $exceptionHandler = null){
+    function __construct(ApiController $controller, ExceptionHandler|null $exceptionHandler = null){
         $this->controller = $controller;
         $this->basePath = $controller->getBasePath();
         $this->exceptionHandler = $exceptionHandler;
