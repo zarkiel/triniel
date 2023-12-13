@@ -67,6 +67,31 @@ class Router{
                 ];
             }
         }
+
+        $routes[] = [
+            "path" => "/__oas__/",
+            "method" => "GET",
+            "action" => "__oas__",
+            "callbacksBefore" => [],
+            "callbacksAfter" =>[],
+            "tags" => [
+                "tag" => ["Triniel Core"],
+                "summary" => ["Return the Open API Specification"]
+            ]
+        ];
+
+        $routes[] = [
+            "path" => "/__swagger__/",
+            "method" => "GET",
+            "action" => "__swagger__",
+            "callbacksBefore" => [],
+            "callbacksAfter" => [],
+            "tags" => [
+                "tag" => ["Triniel Core"],
+                "summary" => ["Display the Swagger UI"]
+            ]
+        ];
+        
         return $routes;
     }
 

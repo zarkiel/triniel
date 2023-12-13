@@ -27,35 +27,24 @@ class OASCreator{
     }
 
     function getInfo(){
-        $tags = $this->getClassDocTags();
-        return [
-            'title' => $tags['title'][0] ?? '',
-            'description' => $tags['description'][0] ?? '',
-            'version' => $tags['version'][0] ?? '',
-        ];
-    }
-
-    function getTags(){
+        $title = ""; $description = ""; $version = "";
         $tags = $this->getClassDocTags();
 
-        if(!isset($tags['tag']) || count($tags['tag']) == 0){
-            return [];
+        if(isset($tags["title"])) {
+            $title = array_shift($tags["title"]);
+        }
+        if(isset($tags["description"])) {
+            $description = array_shift($tags["description"]);
+        }
+        if(isset($tags["version"])) {
+            $version = array_shift($tags["version"]);
         }
 
-        $tags = array_map(function($tag){
-            $chunks = explode(':', $tag);
-            return [
-                'name' => trim(array_shift($chunks)),
-                'description' => trim(implode('', $chunks))
-            ];
-        }, $tags['tag']);
-
-        return $tags;
-    }
-
-    function getClassDocTags(){
-        $reflectionClass = new ReflectionClass($this->controller);
-        return $this->getDocTags($reflectionClass->getDocComment());
+        return [
+            'title' => $title,
+            'description' => $description,
+            'version' => $version,
+        ];
     }
 
     function getDocTags($docComment){
@@ -70,6 +59,29 @@ class OASCreator{
 
             $tags[$key][] = trim(implode(" ", $chunks));
         }
+
+        return $tags;
+    }
+
+    function getClassDocTags(){
+        $reflectionClass = new ReflectionClass($this->controller);
+        return $this->getDocTags($reflectionClass->getDocComment());
+    }
+
+    function getTags(){
+        $docTags = $this->getClassDocTags();
+
+        if(!isset($docTags['tag']) || count($docTags['tag']) == 0){
+            return [];
+        }
+
+        $tags = array_map(function($tag){
+            $chunks = explode(':', $tag);
+            return [
+                'name' => trim(array_shift($chunks)),
+                'description' => trim(implode('', $chunks))
+            ];
+        }, $docTags['tag']);
 
         return $tags;
     }
@@ -165,7 +177,7 @@ class OASCreator{
         foreach($router->getRoutes() As $route){
             $action = $route['action'];
             $reflectionMethod = new ReflectionMethod($this->controller, $action);
-            $tags = !is_null($route["tags"]) ? $route["tags"] : $this->getDocTags($reflectionMethod->getDocComment());
+            $tags = isset($route["tags"]) ? $route["tags"] : $this->getDocTags($reflectionMethod->getDocComment());
             $parameters = $reflectionMethod->getParameters();
             preg_match_all('/\((.+)\)/U', $route['path'], $matches);
             $path = str_replace($matches[0], array_map(fn($parameter) => '{'.$parameter->name.'}', $parameters), $route['path']);
@@ -241,8 +253,6 @@ class OASCreator{
         }
         return $paths;
     }
-
-    
 
     function getResult(){
         return [
