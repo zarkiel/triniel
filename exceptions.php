@@ -69,10 +69,10 @@ class ExceptionHandler {
 
         if($this->fullTrace){
             $info["name"] = get_class($exception);
-            $info["stackTrace"] = $exception->getTrace();
+            $info["stackTrace"] = explode("\n", $exception->getTraceAsString());
         }
         
-        echo json_encode($info);
+        echo json_encode($info, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
     }
 
 }
