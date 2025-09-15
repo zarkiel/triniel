@@ -1,0 +1,19 @@
+{
+    "name": "zarkiel/triniel",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Zarkiel\\Triniel\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Zarkiel",
+            "email": "zarkiel@gmail.com"
+        }
+    ],
+    "require": {
+        "php-patterns/activerecord": "^2.0",
+        "twig/twig": "^3.0"
+    }
+}
