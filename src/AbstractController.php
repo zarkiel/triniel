@@ -23,38 +23,47 @@ class AbstractController{
 
     private function parseRequest(): void
     {
-        // 1. Empezar con los parámetros de la Query String (GET)
+        
+        // 1. Always start with the query string parameters ($_GET)
         $this->params = $_GET;
 
-        // 2. Analizar el cuerpo de la solicitud según el método y Content-Type
         $requestMethod = $_SERVER['REQUEST_METHOD'];
-        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-
-        // Solo los métodos que típicamente tienen un cuerpo son analizados
-        if (in_array($requestMethod, ['POST', 'PUT', 'PATCH'])) {
-            
-            // 2a. Si es un cuerpo JSON
-            if (str_contains($contentType, 'application/json')) {
-                $jsonData = json_decode(file_get_contents('php://input'), true);
-                if (is_array($jsonData)) {
-                    $this->params = array_merge($this->params, $jsonData);
-                }
-            }
-            // 2b. Si es un formulario (POST tradicional)
-            elseif (str_contains($contentType, 'application/x-www-form-urlencoded')) {
-                // Para PUT/PATCH, $_POST está vacío, así que leemos el cuerpo y lo parseamos
-                if (in_array($requestMethod, ['PUT', 'PATCH'])) {
-                     parse_str(file_get_contents('php://input'), $postData);
-                     $this->params = array_merge($this->params, $postData);
-                } else {
-                     $this->params = array_merge($this->params, $_POST);
-                }
-            }
-            // 2c. Si es un formulario con subida de archivos
-            elseif (str_contains($contentType, 'multipart/form-data')) {
-                 $this->params = array_merge($this->params, $_POST, $_FILES);
-            }
+        
+        
+        // No body to parse for GET requests
+        if ($requestMethod === 'GET') {
+            return;
         }
+
+        // For POST requests, PHP does the heavy lifting for us.
+        // We can trust the superglobals.
+        if ($requestMethod === 'POST') {
+            // This correctly handles application/x-www-form-urlencoded and multipart/form-data
+            // by merging both $_POST and $_FILES.
+            $this->params = array_merge($this->params, $_POST, $_FILES);
+            //return;
+        }
+
+        // For PUT, PATCH, DELETE, etc., we must read the raw input stream.
+        // PHP does NOT populate $_POST for these methods.
+        $body = file_get_contents('php://input');
+        if (empty($body)) {
+            return;
+        }
+
+        $contentType = trim($_SERVER['CONTENT_TYPE'] ?? '');
+
+        if (str_starts_with($contentType, 'application/json')) {
+            $jsonData = json_decode($body, true);
+            if (is_array($jsonData)) {
+                $this->params = array_merge($this->params, $jsonData);
+            }
+        } elseif (str_starts_with($contentType, 'application/x-www-form-urlencoded')) {
+            parse_str($body, $bodyData);
+            $this->params = array_merge($this->params, $bodyData);
+        }
+        
+        // Note: As discussed, multipart/form-data is not parsed for PUT/PATCH.
     }
 
     protected function render(string $template, array $data = []): void

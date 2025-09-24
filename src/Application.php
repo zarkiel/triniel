@@ -26,6 +26,14 @@ class Application{
         // Obtener la URI y el método de la solicitud actual
         $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $requestMethod = $_SERVER['REQUEST_METHOD'];
+        //$requestMethod = $_SERVER['REQUEST_METHOD'];
+
+        if ($requestMethod === 'POST' && isset($_POST['_method'])) {
+            $spoofedMethod = strtoupper($_POST['_method']);
+            if (in_array($spoofedMethod, ['PUT', 'PATCH', 'DELETE'])) {
+                $requestMethod = $spoofedMethod;
+            }
+        }
 
         // Despachar la solicitud
         $router->dispatch($requestUri, $requestMethod);
